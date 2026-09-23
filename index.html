@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coin Catcher</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #171738, #2d1b4e);
+    color: white;
+  }
+  .wrap { width: min(92vw, 760px); text-align: center; }
+  h1 { margin: 0 0 8px; font-size: clamp(2rem, 6vw, 4rem); }
+  p { opacity: .8; }
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 18px 0;
+    font-weight: bold;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: #ffffff18;
+    border: 1px solid #ffffff25;
+    padding: 12px 18px;
+    border-radius: 14px;
+    flex: 1;
+  }
+  #arena {
+    position: relative;
+    height: 440px;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 2px solid #ffffff30;
+    background:
+      radial-gradient(circle at 20% 20%, #ffffff12 0 2px, transparent 3px),
+      radial-gradient(circle at 80% 60%, #ffffff12 0 2px, transparent 3px),
+      #101027;
+    box-shadow: 0 15px 50px #0005;
+  }
+  #coin {
+    position: absolute;
+    width: 58px;
+    height: 58px;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 28px;
+    background: linear-gradient(145deg, #ffe878, #f59e0b);
+    box-shadow: 0 0 22px #fbbf2466;
+    transition: transform .08s;
+  }
+  #coin:active { transform: scale(.8); }
+  #message { min-height: 24px; margin: 12px; color: #fde68a; }
+  button.control {
+    border: 0;
+    border-radius: 999px;
+    padding: 13px 22px;
+    margin: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    background: #8b5cf6;
+    color: white;
+  }
+  button.control:hover { background: #a78bfa; }
+  #gameOver { display: none; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🪙 Coin Catcher</h1>
+  <p>Click the coin as many times as possible before time runs out!</p>
+
+  <div class="hud">
+    <div class="stat">Score: <span id="score">0</span></div>
+    <div class="stat">Time: <span id="time">30</span>s</div>
+    <div class="stat">High Score: <span id="high">0</span></div>
+  </div>
+
+  <div id="arena">
+    <button id="coin" aria-label="Catch coin">🪙</button>
+  </div>
+
+  <div id="message">Press Start to begin!</div>
+  <button class="control" id="start">Start Game</button>
+  <button class="control" id="reset">Reset High Score</button>
+
+  <div id="gameOver">
+    <strong>Game over!</strong> Final score: <span id="finalScore">0</span>
+  </div>
+</div>
+
+<script>
+  const arena = document.getElementById("arena");
+  const coin = document.getElementById("coin");
+  const scoreEl = document.getElementById("score");
+  const timeEl = document.getElementById("time");
+  const highEl = document.getElementById("high");
+  const message = document.getElementById("message");
+  const startBtn = document.getElementById("start");
+  const gameOver = document.getElementById("gameOver");
+  const finalScore = document.getElementById("finalScore");
+
+  let score = 0, time = 30, running = false, timer;
+  let high = Number(localStorage.getItem("coinHighScore") || 0);
+  highEl.textContent = high;
+
+  function moveCoin() {
+    const maxX = arena.clientWidth - coin.offsetWidth;
+    const maxY = arena.clientHeight - coin.offsetHeight;
+    coin.style.left = Math.max(0, Math.random() * maxX) + "px";
+    coin.style.top = Math.max(0, Math.random() * maxY) + "px";
+  }
+
+  function startGame() {
+    clearInterval(timer);
+    score = 0;
+    time = 30;
+    running = true;
+    scoreEl.textContent = score;
+    timeEl.textContent = time;
+    message.textContent = "Catch it!";
+    gameOver.style.display = "none";
+    startBtn.textContent = "Restart Game";
+    moveCoin();
+
+    timer = setInterval(() => {
+      time--;
+      timeEl.textContent = time;
+      if (time <= 0) endGame();
+    }, 1000);
+  }
+
+  function endGame() {
+    running = false;
+    clearInterval(timer);
+    finalScore.textContent = score;
+    gameOver.style.display = "block";
+    message.textContent = "Time's up! Try again.";
+    if (score > high) {
+      high = score;
+      localStorage.setItem("coinHighScore", high);
+      highEl.textContent = high;
+      message.textContent = "🎉 New high score!";
+    }
+  }
+
+  coin.addEventListener("click", () => {
+    if (!running) return;
+    score++;
+    scoreEl.textContent = score;
+    moveCoin();
+  });
+
+  startBtn.addEventListener("click", startGame);
+
+  document.getElementById("reset").addEventListener("click", () => {
+    high = 0;
+    localStorage.removeItem("coinHighScore");
+    highEl.textContent = high;
+    message.textContent = "High score reset.";
+  });
+
+  window.addEventListener("resize", () => {
+    if (running) moveCoin();
+  });
+
+  moveCoin();
+</script>
+</body>
+</html>
